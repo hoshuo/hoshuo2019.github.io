@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布料長度計算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7f7f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #37352f;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            color: #37352f;
+            padding: 40px 30px 30px;
+            text-align: center;
+            border-bottom: 1px solid #e5e5e3;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #2f1b14;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #787774;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .width-input {
+            background: #f7f7f5;
+            border: 1px solid #e5e5e3;
+            border-radius: 6px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .width-input label {
+            display: block;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 15px;
+        }
+
+        .width-input input {
+            font-size: 1.3em;
+            padding: 12px 16px;
+            border: 1px solid #d3d3d1;
+            border-radius: 6px;
+            width: 200px;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .width-input input:focus {
+            outline: none;
+            border-color: #2383e2;
+            box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
+        }
+
+        .items-section h2 {
+            font-size: 1.6em;
+            color: #37352f;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .add-item-btn {
+            background: #2383e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 500;
+        }
+
+        .add-item-btn:hover {
+            background: #1e6db8;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr 1fr 1fr 40px;
+            gap: 12px;
+            align-items: center;
+            background: white;
+            padding: 16px;
+            border: 1px solid #e5e5e3;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .item-row:hover {
+            background: #f7f7f5;
+            border-color: #d3d3d1;
+        }
+
+        .item-number {
+            font-weight: 600;
+            color: #787774;
+            text-align: center;
+            font-size: 1em;
+        }
+
+        .item-input {
+            padding: 8px 12px;
+            border: 1px solid #d3d3d1;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .item-input:focus {
+            outline: none;
+            border-color: #2383e2;
+            box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
+        }
+
+        .area-display {
+            background: #f1f1ef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 500;
+            color: #37352f;
+            font-size: 0.9em;
+            border: 1px solid #e5e5e3;
+        }
+
+        .delete-btn {
+            background: #eb5757;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .delete-btn:hover {
+            background: #c53030;
+        }
+
+        .total-area {
+            background: #f7f7f5;
+            border: 1px solid #e5e5e3;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .total-area h3 {
+            font-size: 1.2em;
+            color: #37352f;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .total-area .value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #2f1b14;
+        }
+
+        .calculate-btn {
+            background: #2383e2;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: block;
+            margin: 30px auto;
+        }
+
+        .calculate-btn:hover {
+            background: #1e6db8;
+        }
+
+        .result {
+            background: #f7f7f5;
+            border: 1px solid #e5e5e3;
+            padding: 30px;
+            border-radius: 6px;
+            margin-top: 30px;
+            text-align: center;
+            animation: resultAppear 0.3s ease;
+        }
+
+        @keyframes resultAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result h3 {
+            font-size: 1.4em;
+            color: #37352f;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .result .length-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2f1b14;
+            margin-bottom: 10px;
+        }
+
+        .result .formula {
+            background: white;
+            border: 1px solid #e5e5e3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 1em;
+            color: #787774;
+            line-height: 1.5;
+        }
+
+        .layout-details {
+            background: white;
+            border: 1px solid #e5e5e3;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .layout-details h4 {
+            margin-bottom: 15px;
+            color: #37352f;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .layout-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1ef;
+            font-size: 0.9em;
+        }
+
+        .layout-item:last-child {
+            border-bottom: none;
+        }
+
+        .layout-item span:first-child {
+            color: #37352f;
+            font-weight: 500;
+        }
+
+        .layout-item span:last-child {
+            color: #787774;
+            font-family: 'SF Mono', Consolas, monospace;
+        }
+
+        .footer {
+            background: #f7f7f5;
+            color: #787774;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            border-top: 1px solid #e5e5e3;
+        }
+
+        @media (max-width: 768px) {
+            .item-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .item-number {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📏 布料長度計算器</h1>
+            <p>智能排版，精準計算所需布料長度</p>
+        </div>
+
+        <div class="content">
+            <div class="width-input">
+                <label for="maxWidth">最大幅寬 (公分)</label>
+                <input type="number" id="maxWidth" placeholder="145" step="0.1">
+            </div>
+
+            <div class="items-section">
+                <h2>各項目尺寸</h2>
+                <button class="add-item-btn" onclick="addItem()">➕ 新增項目</button>
+                
+                <div id="itemsContainer">
+                    <div class="item-row" data-id="1">
+                        <div class="item-number">1</div>
+                        <input type="number" class="item-input length" placeholder="長度" step="0.1">
+                        <input type="number" class="item-input width" placeholder="寬度" step="0.1">
+                        <input type="number" class="item-input quantity" placeholder="數量" step="1" min="1">
+                        <div class="area-display">0 cm²</div>
+                        <button class="delete-btn" onclick="removeItem(1)" style="visibility: hidden;">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="total-area">
+                <h3>總面積</h3>
+                <div class="value" id="totalArea">0 cm²</div>
+            </div>
+
+            <button class="calculate-btn" onclick="calculateLength()">🚀 計算所需長度</button>
+
+            <div id="result" style="display: none;"></div>
+        </div>
+
+        <div class="footer">
+            💡 每次使用完畢，資料不會被保存 | 需要重新計算請重新整理頁面
+        </div>
+    </div>
+
+    <script>
+        let itemCounter = 1;
+
+        function addItem() {
+            itemCounter++;
+            const container = document.getElementById('itemsContainer');
+            const itemRow = document.createElement('div');
+            itemRow.className = 'item-row';
+            itemRow.setAttribute('data-id', itemCounter);
+            
+            itemRow.innerHTML = `
+                <div class="item-number">${itemCounter}</div>
+                <input type="number" class="item-input length" placeholder="長度" step="0.1">
+                <input type="number" class="item-input width" placeholder="寬度" step="0.1">
+                <input type="number" class="item-input quantity" placeholder="數量" step="1" min="1">
+                <div class="area-display">0 cm²</div>
+                <button class="delete-btn" onclick="removeItem(${itemCounter})">×</button>
+            `;
+            
+            container.appendChild(itemRow);
+            updateItemNumbers();
+            attachInputListeners();
+        }
+
+        function removeItem(id) {
+            const itemRow = document.querySelector(`[data-id="${id}"]`);
+            if (itemRow) {
+                itemRow.remove();
+                updateItemNumbers();
+                updateTotalArea();
+            }
+        }
+
+        function updateItemNumbers() {
+            const items = document.querySelectorAll('.item-row');
+            items.forEach((item, index) => {
+                const numberDiv = item.querySelector('.item-number');
+                numberDiv.textContent = index + 1;
+                
+                const deleteBtn = item.querySelector('.delete-btn');
+                deleteBtn.style.visibility = items.length > 1 ? 'visible' : 'hidden';
+            });
+        }
+
+        function attachInputListeners() {
+            const inputs = document.querySelectorAll('.item-input');
+            inputs.forEach(input => {
+                input.removeEventListener('input', updateItemArea);
+                input.addEventListener('input', updateItemArea);
+            });
+        }
+
+        function updateItemArea(event) {
+            const row = event.target.closest('.item-row');
+            const length = parseFloat(row.querySelector('.length').value) || 0;
+            const width = parseFloat(row.querySelector('.width').value) || 0;
+            const quantity = parseInt(row.querySelector('.quantity').value) || 0;
+            
+            const area = length * width * quantity;
+            row.querySelector('.area-display').textContent = `${area.toFixed(1)} cm²`;
+            
+            updateTotalArea();
+        }
+
+        function updateTotalArea() {
+            const areaDisplays = document.querySelectorAll('.area-display');
+            let total = 0;
+            areaDisplays.forEach(display => {
+                const value = parseFloat(display.textContent.replace(' cm²', '')) || 0;
+                total += value;
+            });
+            document.getElementById('totalArea').textContent = `${total.toFixed(1)} cm²`;
+        }
+
+        function calculateLength() {
+            const maxWidth = parseFloat(document.getElementById('maxWidth').value);
+            if (!maxWidth || maxWidth <= 0) {
+                alert('請輸入有效的幅寬！');
+                return;
+            }
+
+            const items = document.querySelectorAll('.item-row');
+            let totalLength = 0;
+            let layoutDetails = [];
+
+            items.forEach(item => {
+                const length = parseFloat(item.querySelector('.length').value) || 0;
+                const width = parseFloat(item.querySelector('.width').value) || 0;
+                const quantity = parseInt(item.querySelector('.quantity').value) || 0;
+
+                if (length > 0 && width > 0 && quantity > 0) {
+                    // 檢查是否超過幅寬
+                    if (length > maxWidth) {
+                        alert(`項目 ${length}×${width} 的長度超過幅寬！`);
+                        return;
+                    }
+
+                    const perRow = Math.floor(maxWidth / length);
+                    const rows = Math.ceil(quantity / perRow);
+                    const itemLength = rows * width;
+                    
+                    totalLength += itemLength;
+                    
+                    layoutDetails.push({
+                        size: `${length}×${width}cm`,
+                        quantity: quantity,
+                        perRow: perRow,
+                        rows: rows,
+                        length: itemLength
+                    });
+                }
+            });
+
+            if (layoutDetails.length === 0) {
+                alert('請輸入有效的項目資料！');
+                return;
+            }
+
+            displayResult(maxWidth, totalLength, layoutDetails);
+        }
+
+        function displayResult(maxWidth, totalLength, layoutDetails) {
+            const resultDiv = document.getElementById('result');
+            const totalArea = parseFloat(document.getElementById('totalArea').textContent.replace(' cm²', ''));
+            
+            let layoutHtml = layoutDetails.map(item => `
+                <div class="layout-item">
+                    <span>${item.size} × ${item.quantity}個</span>
+                    <span>${item.perRow}個/行 × ${item.rows}行 = ${item.length}cm</span>
+                </div>
+            `).join('');
+
+            resultDiv.innerHTML = `
+                <h3>🎯 計算結果</h3>
+                <div class="length-value">${totalLength.toFixed(1)} cm</div>
+                <div class="formula">
+                    在幅寬 ${maxWidth} cm 的條件下<br>
+                    總面積 ${totalArea.toFixed(1)} cm² → 實際需要 ${totalLength.toFixed(1)} cm
+                </div>
+                <div class="layout-details">
+                    <h4>📋 排版明細</h4>
+                    ${layoutHtml}
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            attachInputListeners();
+            
+            // 設定預設值
+            document.getElementById('maxWidth').value = '145';
+            const firstRow = document.querySelector('.item-row');
+            firstRow.querySelector('.length').value = '50';
+            firstRow.querySelector('.width').value = '50';
+            firstRow.querySelector('.quantity').value = '2';
+            
+            updateItemArea({ target: firstRow.querySelector('.length') });
+        });
+    </script>
+</body>
+</html>
