@@ -1,12 +1,305 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>工具箱</title>
-    <meta http-equiv="refresh" content="0; url=fabric-calculator.html">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ho Shuo - 工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f7f7f5;
+            min-height: 100vh;
+            padding: 20px;
+            color: #37352f;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 1px solid #e5e5e3;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #2f1b14;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #787774;
+            margin-bottom: 20px;
+        }
+
+        .header .subtitle {
+            font-size: 1em;
+            color: #9b9b9b;
+            font-style: italic;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border: 1px solid #e5e5e3;
+            border-radius: 8px;
+            padding: 25px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .tool-card:hover {
+            background: #f7f7f5;
+            border-color: #2383e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .tool-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tool-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #37352f;
+            margin-bottom: 10px;
+        }
+
+        .tool-description {
+            color: #787774;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #f1f1ef;
+            color: #787774;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .coming-soon {
+            background: #f7f7f5;
+            border: 1px dashed #d3d3d1;
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #d3d3d1;
+        }
+
+        .coming-soon .tool-title {
+            color: #9b9b9b;
+        }
+
+        .coming-soon .tool-description {
+            color: #9b9b9b;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e5e3;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2383e2;
+        }
+
+        .stat-label {
+            color: #787774;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .footer {
+            background: #f7f7f5;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #e5e5e3;
+        }
+
+        .footer p {
+            color: #787774;
+            font-size: 0.9em;
+        }
+
+        .footer a {
+            color: #2383e2;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <p>正在跳轉到布料計算器...</p>
-    <a href="fabric-calculator.html">點擊這裡手動跳轉</a>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ Ho Shuo 工具箱</h1>
+            <p>實用工具集合，讓工作更有效率</p>
+            <div class="subtitle">持續更新中...</div>
+        </div>
+
+        <div class="content">
+            <div class="tools-grid">
+                <!-- 布料長度計算器 -->
+                <a href="fabric-calculator.html" class="tool-card">
+                    <div class="tool-icon">📏</div>
+                    <div class="tool-title">布料長度計算器</div>
+                    <div class="tool-description">
+                        智能排版計算所需布料長度，支援多項目批量計算，讓裁縫工作更精確。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">計算工具</span>
+                        <span class="tag">布料</span>
+                        <span class="tag">排版</span>
+                    </div>
+                </a>
+
+                <!-- 未來工具預告 -->
+                <div class="tool-card coming-soon">
+                    <div class="tool-icon">🧮</div>
+                    <div class="tool-title">單位轉換器</div>
+                    <div class="tool-description">
+                        快速轉換各種單位，包含長度、重量、面積等常用單位。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">即將推出</span>
+                    </div>
+                </div>
+
+                <div class="tool-card coming-soon">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-title">數據分析工具</div>
+                    <div class="tool-description">
+                        簡單易用的數據分析和視覺化工具，支援CSV文件導入。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">即將推出</span>
+                    </div>
+                </div>
+
+                <div class="tool-card coming-soon">
+                    <div class="tool-icon">🎨</div>
+                    <div class="tool-title">配色工具</div>
+                    <div class="tool-description">
+                        色彩搭配和調色盤生成工具，為設計工作提供靈感。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">即將推出</span>
+                    </div>
+                </div>
+
+                <div class="tool-card coming-soon">
+                    <div class="tool-icon">⏰</div>
+                    <div class="tool-title">時間管理器</div>
+                    <div class="tool-description">
+                        簡潔的番茄鐘和時間追蹤工具，提升工作效率。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">即將推出</span>
+                    </div>
+                </div>
+
+                <div class="tool-card coming-soon">
+                    <div class="tool-icon">💰</div>
+                    <div class="tool-title">費用計算器</div>
+                    <div class="tool-description">
+                        多功能費用計算工具，支援稅務計算、分帳等功能。
+                    </div>
+                    <div class="tool-tags">
+                        <span class="tag">即將推出</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">可用工具</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">即將推出</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">更多可能</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                Made with ❤️ by Ho Shuo | 
+                <a href="https://github.com/hoshuo" target="_blank">GitHub</a> | 
+                <a href="https://sixth-knuckle-245.notion.site/Ho-Shuo-07ed8ec582da41e4b2d668f52c19aba7" target="_blank">Notion</a>
+            </p>
+        </div>
+    </div>
 </body>
 </html>
