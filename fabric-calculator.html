@@ -206,6 +206,98 @@
             color: #2f1b14;
         }
 
+        /* 新增：餘料計算區域 */
+        .remaining-fabric-section {
+            background: #fff9e6;
+            border: 1px solid #f0d060;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .remaining-fabric-section h3 {
+            font-size: 1.3em;
+            color: #37352f;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .current-fabric-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .current-fabric-input label {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #37352f;
+        }
+
+        .current-fabric-input input {
+            font-size: 1.2em;
+            padding: 10px 15px;
+            border: 1px solid #f0d060;
+            border-radius: 6px;
+            width: 150px;
+            text-align: center;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .current-fabric-input input:focus {
+            outline: none;
+            border-color: #e6b800;
+            box-shadow: 0 0 0 2px rgba(230, 184, 0, 0.2);
+        }
+
+        .remaining-result {
+            background: white;
+            border: 1px solid #f0d060;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .remaining-result.sufficient {
+            background: #f0f9ff;
+            border-color: #2383e2;
+        }
+
+        .remaining-result.insufficient {
+            background: #fff5f5;
+            border-color: #eb5757;
+        }
+
+        .remaining-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .remaining-value.sufficient {
+            color: #2383e2;
+        }
+
+        .remaining-value.insufficient {
+            color: #eb5757;
+        }
+
+        .remaining-message {
+            font-size: 1em;
+            color: #787774;
+            line-height: 1.5;
+        }
+
         .calculate-btn {
             background: #2383e2;
             color: white;
@@ -320,6 +412,11 @@
             .item-number {
                 grid-column: 1;
             }
+
+            .current-fabric-input {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -357,6 +454,20 @@
                 <div class="value" id="totalArea">0 cm²</div>
             </div>
 
+            <!-- 新增：餘料計算區域 -->
+            <div class="remaining-fabric-section">
+                <h3>✂️ 餘料計算</h3>
+                <div class="current-fabric-input">
+                    <label for="currentFabric">目前布料長度:</label>
+                    <input type="number" id="currentFabric" placeholder="0" step="0.1">
+                    <span style="color: #787774;">cm</span>
+                </div>
+                <div id="remainingResult" style="display: none;" class="remaining-result">
+                    <div class="remaining-value" id="remainingValue">0 cm</div>
+                    <div class="remaining-message" id="remainingMessage"></div>
+                </div>
+            </div>
+
             <button class="calculate-btn" onclick="calculateLength()">🚀 計算所需長度</button>
 
             <div id="result" style="display: none;"></div>
@@ -369,6 +480,7 @@
 
     <script>
         let itemCounter = 1;
+        let totalRequiredLength = 0; // 新增：儲存總需求長度
 
         function addItem() {
             itemCounter++;
@@ -397,6 +509,7 @@
                 itemRow.remove();
                 updateItemNumbers();
                 updateTotalArea();
+                calculateRemainingFabric(); // 新增：重新計算餘料
             }
         }
 
@@ -417,6 +530,11 @@
                 input.removeEventListener('input', updateItemArea);
                 input.addEventListener('input', updateItemArea);
             });
+
+            // 新增：為現有布料輸入添加監聽器
+            const currentFabricInput = document.getElementById('currentFabric');
+            currentFabricInput.removeEventListener('input', calculateRemainingFabric);
+            currentFabricInput.addEventListener('input', calculateRemainingFabric);
         }
 
         function updateItemArea(event) {
@@ -429,6 +547,7 @@
             row.querySelector('.area-display').textContent = `${area.toFixed(1)} cm²`;
             
             updateTotalArea();
+            calculateRemainingFabric(); // 新增：更新餘料計算
         }
 
         function updateTotalArea() {
@@ -439,6 +558,37 @@
                 total += value;
             });
             document.getElementById('totalArea').textContent = `${total.toFixed(1)} cm²`;
+        }
+
+        // 新增：計算餘料功能
+        function calculateRemainingFabric() {
+            const currentFabric = parseFloat(document.getElementById('currentFabric').value) || 0;
+            
+            if (currentFabric === 0 || totalRequiredLength === 0) {
+                document.getElementById('remainingResult').style.display = 'none';
+                return;
+            }
+
+            const remaining = totalRequiredLength - currentFabric;
+            const remainingResultDiv = document.getElementById('remainingResult');
+            const remainingValueDiv = document.getElementById('remainingValue');
+            const remainingMessageDiv = document.getElementById('remainingMessage');
+
+            remainingResultDiv.style.display = 'block';
+
+            if (remaining <= 0) {
+                // 布料足夠
+                remainingResultDiv.className = 'remaining-result sufficient';
+                remainingValueDiv.className = 'remaining-value sufficient';
+                remainingValueDiv.textContent = `多 ${Math.abs(remaining).toFixed(1)} cm`;
+                remainingMessageDiv.innerHTML = `🎉 太好了！你的布料夠用，還會多出 <strong>${Math.abs(remaining).toFixed(1)} cm</strong>`;
+            } else {
+                // 布料不足
+                remainingResultDiv.className = 'remaining-result insufficient';
+                remainingValueDiv.className = 'remaining-value insufficient';
+                remainingValueDiv.textContent = `缺 ${remaining.toFixed(1)} cm`;
+                remainingMessageDiv.innerHTML = `⚠️ 布料不夠！你還需要 <strong>${remaining.toFixed(1)} cm</strong> 的布料才能完成所有項目`;
+            }
         }
 
         function calculateLength() {
@@ -484,6 +634,9 @@
                 alert('請輸入有效的項目資料！');
                 return;
             }
+
+            totalRequiredLength = totalLength; // 新增：儲存總需求長度
+            calculateRemainingFabric(); // 新增：計算餘料
 
             displayResult(maxWidth, totalLength, layoutDetails);
         }
