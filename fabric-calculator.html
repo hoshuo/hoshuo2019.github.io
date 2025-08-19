@@ -435,7 +435,6 @@
 
             <div class="items-section">
                 <h2>各項目尺寸</h2>
-                <button class="add-item-btn" onclick="addItem()">➕ 新增項目</button>
                 
                 <div id="itemsContainer">
                     <div class="item-row" data-id="1">
@@ -447,6 +446,8 @@
                         <button class="delete-btn" onclick="removeItem(1)" style="visibility: hidden;">×</button>
                     </div>
                 </div>
+                
+                <button class="add-item-btn" onclick="addItem()">➕ 新增項目</button>
             </div>
 
             <div class="total-area">
@@ -560,34 +561,192 @@
             document.getElementById('totalArea').textContent = `${total.toFixed(1)} cm²`;
         }
 
-        // 新增：計算餘料功能
+        // 修正：智能餘料計算功能
         function calculateRemainingFabric() {
             const currentFabric = parseFloat(document.getElementById('currentFabric').value) || 0;
+            const maxWidth = parseFloat(document.getElementById('maxWidth').value) || 0;
             
-            if (currentFabric === 0 || totalRequiredLength === 0) {
+            if (currentFabric === 0 || maxWidth === 0) {
                 document.getElementById('remainingResult').style.display = 'none';
                 return;
             }
 
-            const remaining = totalRequiredLength - currentFabric;
+            // 獲取所有項目的排版需求
+            const items = document.querySelectorAll('.item-row');
+            let layoutRequirements = [];
+            let totalRequiredFromCalculation = 0;
+
+            items.forEach((item, index) => {
+                const length = parseFloat(item.querySelector('.length').value) || 0;
+                const width = parseFloat(item.querySelector('.width').value) || 0;
+                const quantity = parseInt(item.querySelector('.quantity').value) || 0;
+
+                if (length > 0 && width > 0 && quantity > 0) {
+                    let requiredLength;
+                    let layoutInfo;
+
+                    // 窗簾/床頭板邏輯：只有寬度超過幅寬才是問題
+                    if (width > maxWidth) {
+                        // 寬度超寬項目，無法正常製作
+                        requiredLength = length * quantity;
+                        layoutInfo = {
+                            size: `${length}×${width}cm`,
+                            quantity: quantity,
+                            requiredLength: requiredLength,
+                            isOverwidth: true,
+                            unitLength: length,
+                            issueType: 'width'
+                        };
+                    } else {
+                        // 正常情況：按寬度方向排版（長度可以超過幅寬）
+                        const perRow = Math.floor(maxWidth / width);
+                        const rows = Math.ceil(quantity / perRow);
+                        requiredLength = rows * length;
+                        layoutInfo = {
+                            size: `${length}×${width}cm`,
+                            quantity: quantity,
+                            requiredLength: requiredLength,
+                            isOverwidth: false,
+                            perRow: perRow,
+                            rows: rows,
+                            unitLength: length
+                        };
+                    }
+
+                    layoutRequirements.push(layoutInfo);
+                    totalRequiredFromCalculation += requiredLength;
+                }
+            });
+
+            if (layoutRequirements.length === 0) {
+                document.getElementById('remainingResult').style.display = 'none';
+                return;
+            }
+
+            // 智能分配現有布料
+            let remainingFabric = currentFabric;
+            let completedItems = [];
+            let uncompletedItems = [];
+
+            // 按需求長度排序，優先滿足需求較小的項目
+            layoutRequirements.sort((a, b) => a.requiredLength - b.requiredLength);
+
+            layoutRequirements.forEach(item => {
+                if (remainingFabric >= item.requiredLength) {
+                    // 可以完成這個項目
+                    remainingFabric -= item.requiredLength;
+                    completedItems.push(item);
+                } else {
+                    // 無法完成這個項目
+                    // 檢查是否能部分完成
+                    if (item.isOverwidth) {
+                        // 超寬項目，計算能完成幾個
+                        const canComplete = Math.floor(remainingFabric / item.unitLength);
+                        if (canComplete > 0) {
+                            completedItems.push({
+                                ...item,
+                                quantity: canComplete,
+                                requiredLength: canComplete * item.unitLength,
+                                isPartial: true
+                            });
+                            remainingFabric -= canComplete * item.unitLength;
+                        }
+                        uncompletedItems.push({
+                            ...item,
+                            quantity: item.quantity - canComplete,
+                            requiredLength: (item.quantity - canComplete) * item.unitLength
+                        });
+                    } else {
+                        // 正常項目，計算能完成幾行
+                        const canCompleteRows = Math.floor(remainingFabric / item.unitLength);
+                        const canCompleteQuantity = Math.min(canCompleteRows * item.perRow, item.quantity);
+                        
+                        if (canCompleteQuantity > 0) {
+                            const actualRows = Math.ceil(canCompleteQuantity / item.perRow);
+                            completedItems.push({
+                                ...item,
+                                quantity: canCompleteQuantity,
+                                requiredLength: actualRows * item.unitLength,
+                                rows: actualRows,
+                                isPartial: true
+                            });
+                            remainingFabric -= actualRows * item.unitLength;
+                        }
+                        
+                        const uncompletedQuantity = item.quantity - canCompleteQuantity;
+                        if (uncompletedQuantity > 0) {
+                            const uncompletedRows = Math.ceil(uncompletedQuantity / item.perRow);
+                            uncompletedItems.push({
+                                ...item,
+                                quantity: uncompletedQuantity,
+                                requiredLength: uncompletedRows * item.unitLength,
+                                rows: uncompletedRows
+                            });
+                        }
+                    }
+                }
+            });
+
+            // 計算還需要的布料
+            const stillNeeded = uncompletedItems.reduce((sum, item) => sum + item.requiredLength, 0);
+
+            // 顯示結果
+            displayRemainingResult(currentFabric, remainingFabric, completedItems, uncompletedItems, stillNeeded);
+        }
+
+        function displayRemainingResult(currentFabric, leftoverFabric, completedItems, uncompletedItems, stillNeeded) {
             const remainingResultDiv = document.getElementById('remainingResult');
             const remainingValueDiv = document.getElementById('remainingValue');
             const remainingMessageDiv = document.getElementById('remainingMessage');
 
             remainingResultDiv.style.display = 'block';
 
-            if (remaining <= 0) {
-                // 布料足夠
+            if (stillNeeded === 0) {
+                // 布料完全夠用
                 remainingResultDiv.className = 'remaining-result sufficient';
                 remainingValueDiv.className = 'remaining-value sufficient';
-                remainingValueDiv.textContent = `多 ${Math.abs(remaining).toFixed(1)} cm`;
-                remainingMessageDiv.innerHTML = `🎉 太好了！你的布料夠用，還會多出 <strong>${Math.abs(remaining).toFixed(1)} cm</strong>`;
+                remainingValueDiv.textContent = `剩餘 ${leftoverFabric.toFixed(1)} cm`;
+                
+                let completedHtml = completedItems.map(item => 
+                    `• ${item.size} × ${item.quantity}個`
+                ).join('<br>');
+                
+                remainingMessageDiv.innerHTML = `
+                    🎉 <strong>布料完全夠用！</strong><br>
+                    <div style="margin-top: 10px; padding: 10px; background: #f0f9ff; border-radius: 4px; font-size: 0.9em;">
+                        <strong>可完成項目：</strong><br>
+                        ${completedHtml}
+                        <br><strong>剩餘布料：</strong> ${leftoverFabric.toFixed(1)} cm
+                    </div>
+                `;
             } else {
                 // 布料不足
                 remainingResultDiv.className = 'remaining-result insufficient';
                 remainingValueDiv.className = 'remaining-value insufficient';
-                remainingValueDiv.textContent = `缺 ${remaining.toFixed(1)} cm`;
-                remainingMessageDiv.innerHTML = `⚠️ 布料不夠！你還需要 <strong>${remaining.toFixed(1)} cm</strong> 的布料才能完成所有項目`;
+                remainingValueDiv.textContent = `還需 ${stillNeeded.toFixed(1)} cm`;
+                
+                let completedHtml = completedItems.length > 0 ? 
+                    completedItems.map(item => {
+                        let partial = item.isPartial ? ' (部分)' : '';
+                        return `• ${item.size} × ${item.quantity}個${partial}`;
+                    }).join('<br>') : '無';
+                
+                let uncompletedHtml = uncompletedItems.map(item => 
+                    `• ${item.size} × ${item.quantity}個 → 需要 ${item.requiredLength.toFixed(1)}cm`
+                ).join('<br>');
+                
+                remainingMessageDiv.innerHTML = `
+                    ⚠️ <strong>布料不夠！還需要 ${stillNeeded.toFixed(1)} cm</strong><br>
+                    <div style="margin-top: 10px; padding: 10px; background: #f0f9ff; border-radius: 4px; font-size: 0.9em;">
+                        <strong>已可完成：</strong><br>
+                        ${completedHtml}
+                    </div>
+                    <div style="margin-top: 8px; padding: 10px; background: #fff5f5; border-radius: 4px; font-size: 0.9em;">
+                        <strong>尚未完成：</strong><br>
+                        ${uncompletedHtml}
+                    </div>
+                    ${leftoverFabric > 0 ? `<div style="margin-top: 8px; color: #787774; font-size: 0.9em;">剩餘布料：${leftoverFabric.toFixed(1)} cm</div>` : ''}
+                `;
             }
         }
 
@@ -602,31 +761,46 @@
             let totalLength = 0;
             let layoutDetails = [];
 
-            items.forEach(item => {
+            items.forEach((item, index) => {
                 const length = parseFloat(item.querySelector('.length').value) || 0;
                 const width = parseFloat(item.querySelector('.width').value) || 0;
                 const quantity = parseInt(item.querySelector('.quantity').value) || 0;
 
                 if (length > 0 && width > 0 && quantity > 0) {
-                    // 檢查是否超過幅寬
-                    if (length > maxWidth) {
-                        alert(`項目 ${length}×${width} 的長度超過幅寬！`);
-                        return;
+                    // 窗簾/床頭板邏輯：長度可以超過幅寬，寬度不應該超過幅寬
+                    if (width > maxWidth) {
+                        // 寬度超過幅寬才是真正的問題
+                        const itemLength = length * quantity;
+                        
+                        totalLength += itemLength;
+                        
+                        layoutDetails.push({
+                            size: `${length}×${width}cm`,
+                            quantity: quantity,
+                            perRow: `寬度超限`,
+                            rows: quantity,
+                            length: itemLength,
+                            hasIssue: true,
+                            issueType: 'width'
+                        });
+                    } 
+                    else {
+                        // 正常情況：按長度方向排版
+                        const perRow = Math.floor(maxWidth / width);  // 注意：這裡用寬度計算每行數量
+                        const rows = Math.ceil(quantity / perRow);
+                        const itemLength = rows * length;  // 用長度計算總需求
+                        
+                        totalLength += itemLength;
+                        
+                        layoutDetails.push({
+                            size: `${length}×${width}cm`,
+                            quantity: quantity,
+                            perRow: perRow,
+                            rows: rows,
+                            length: itemLength,
+                            hasIssue: false
+                        });
                     }
-
-                    const perRow = Math.floor(maxWidth / length);
-                    const rows = Math.ceil(quantity / perRow);
-                    const itemLength = rows * width;
-                    
-                    totalLength += itemLength;
-                    
-                    layoutDetails.push({
-                        size: `${length}×${width}cm`,
-                        quantity: quantity,
-                        perRow: perRow,
-                        rows: rows,
-                        length: itemLength
-                    });
                 }
             });
 
@@ -635,8 +809,8 @@
                 return;
             }
 
-            totalRequiredLength = totalLength; // 新增：儲存總需求長度
-            calculateRemainingFabric(); // 新增：計算餘料
+            totalRequiredLength = totalLength; // 儲存總需求長度
+            calculateRemainingFabric(); // 計算餘料
 
             displayResult(maxWidth, totalLength, layoutDetails);
         }
@@ -645,12 +819,50 @@
             const resultDiv = document.getElementById('result');
             const totalArea = parseFloat(document.getElementById('totalArea').textContent.replace(' cm²', ''));
             
-            let layoutHtml = layoutDetails.map(item => `
-                <div class="layout-item">
-                    <span>${item.size} × ${item.quantity}個</span>
-                    <span>${item.perRow}個/行 × ${item.rows}行 = ${item.length}cm</span>
-                </div>
-            `).join('');
+            let hasWidthIssues = layoutDetails.some(item => item.hasIssue && item.issueType === 'width');
+            
+            let layoutHtml = layoutDetails.map(item => {
+                if (item.hasIssue && item.issueType === 'width') {
+                    return `
+                        <div class="layout-item" style="background: #fff5f5; border-left: 3px solid #eb5757; padding-left: 15px;">
+                            <span>${item.size} × ${item.quantity}個 ⚠️</span>
+                            <span>寬度超過幅寬，無法製作</span>
+                        </div>
+                    `;
+                } else {
+                    // 正常項目的顯示
+                    let arrangement;
+                    if (item.quantity === 1) {
+                        arrangement = `單片 = ${item.length}cm`;
+                    } else if (item.perRow === 1) {
+                        arrangement = `${item.quantity}片縱向排列 = ${item.length}cm`;
+                    } else {
+                        arrangement = `${item.perRow}片/行 × ${item.rows}行 = ${item.length}cm`;
+                    }
+                    
+                    return `
+                        <div class="layout-item">
+                            <span>${item.size} × ${item.quantity}個</span>
+                            <span>${arrangement}</span>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            let warningHtml = '';
+            if (hasWidthIssues) {
+                warningHtml = `
+                    <div style="background: #fff5f5; border: 1px solid #eb5757; border-radius: 6px; padding: 15px; margin-top: 15px;">
+                        <div style="color: #eb5757; font-weight: 600; margin-bottom: 8px;">⚠️ 注意事項</div>
+                        <div style="color: #37352f; font-size: 0.9em; line-height: 1.4;">
+                            有項目的寬度超過布料幅寬 ${maxWidth}cm，建議：<br>
+                            • 使用更寬幅的布料，或<br>
+                            • 調整設計尺寸，或<br>
+                            • 採用拼接方式製作
+                        </div>
+                    </div>
+                `;
+            }
 
             resultDiv.innerHTML = `
                 <h3>🎯 計算結果</h3>
@@ -659,6 +871,7 @@
                     在幅寬 ${maxWidth} cm 的條件下<br>
                     總面積 ${totalArea.toFixed(1)} cm² → 實際需要 ${totalLength.toFixed(1)} cm
                 </div>
+                ${warningHtml}
                 <div class="layout-details">
                     <h4>📋 排版明細</h4>
                     ${layoutHtml}
