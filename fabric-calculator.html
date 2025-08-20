@@ -705,7 +705,7 @@
                 // 布料完全夠用
                 remainingResultDiv.className = 'remaining-result sufficient';
                 remainingValueDiv.className = 'remaining-value sufficient';
-                remainingValueDiv.textContent = `剩餘 ${leftoverFabric.toFixed(1)} cm`;
+                remainingValueDiv.textContent = `剩餘 ${leftoverFabric.toFixed(0)} cm`;
                 
                 let completedHtml = completedItems.map(item => 
                     `• ${item.size} × ${item.quantity}個`
@@ -716,14 +716,16 @@
                     <div style="margin-top: 10px; padding: 10px; background: #f0f9ff; border-radius: 4px; font-size: 0.9em;">
                         <strong>可完成項目：</strong><br>
                         ${completedHtml}
-                        <br><strong>剩餘布料：</strong> ${leftoverFabric.toFixed(1)} cm
+                        <br><strong>剩餘布料：</strong> ${leftoverFabric.toFixed(0)} cm
                     </div>
                 `;
             } else {
-                // 布料不足
+                // 布料不足，換算成碼
+                const stillNeededYards = (stillNeeded / 91.44);
+                
                 remainingResultDiv.className = 'remaining-result insufficient';
                 remainingValueDiv.className = 'remaining-value insufficient';
-                remainingValueDiv.textContent = `還需 ${stillNeeded.toFixed(1)} cm`;
+                remainingValueDiv.innerHTML = `還需 ${stillNeeded.toFixed(0)} cm<br><span style="font-size: 0.7em; font-weight: 400;">(約 ${stillNeededYards.toFixed(2)} 碼)</span>`;
                 
                 let completedHtml = completedItems.length > 0 ? 
                     completedItems.map(item => {
@@ -731,12 +733,13 @@
                         return `• ${item.size} × ${item.quantity}個${partial}`;
                     }).join('<br>') : '無';
                 
-                let uncompletedHtml = uncompletedItems.map(item => 
-                    `• ${item.size} × ${item.quantity}個 → 需要 ${item.requiredLength.toFixed(1)}cm`
-                ).join('<br>');
+                let uncompletedHtml = uncompletedItems.map(item => {
+                    const itemYards = (item.requiredLength / 91.44);
+                    return `• ${item.size} × ${item.quantity}個 → 需要 ${item.requiredLength.toFixed(0)}cm (${itemYards.toFixed(2)}碼)`;
+                }).join('<br>');
                 
                 remainingMessageDiv.innerHTML = `
-                    ⚠️ <strong>布料不夠！還需要 ${stillNeeded.toFixed(1)} cm</strong><br>
+                    ⚠️ <strong>布料不夠！還需要 ${stillNeeded.toFixed(0)} cm (約 ${stillNeededYards.toFixed(2)} 碼)</strong><br>
                     <div style="margin-top: 10px; padding: 10px; background: #f0f9ff; border-radius: 4px; font-size: 0.9em;">
                         <strong>已可完成：</strong><br>
                         ${completedHtml}
@@ -745,7 +748,7 @@
                         <strong>尚未完成：</strong><br>
                         ${uncompletedHtml}
                     </div>
-                    ${leftoverFabric > 0 ? `<div style="margin-top: 8px; color: #787774; font-size: 0.9em;">剩餘布料：${leftoverFabric.toFixed(1)} cm</div>` : ''}
+                    ${leftoverFabric > 0 ? `<div style="margin-top: 8px; color: #787774; font-size: 0.9em;">剩餘布料：${leftoverFabric.toFixed(0)} cm</div>` : ''}
                 `;
             }
         }
@@ -821,6 +824,9 @@
             
             let hasWidthIssues = layoutDetails.some(item => item.hasIssue && item.issueType === 'width');
             
+            // 換算成碼（1碼 = 91.44cm）
+            const totalYards = (totalLength / 91.44);
+            
             let layoutHtml = layoutDetails.map(item => {
                 if (item.hasIssue && item.issueType === 'width') {
                     return `
@@ -864,14 +870,35 @@
                 `;
             }
 
+            // 優化提示
+            let optimizationHtml = '';
+            if (layoutDetails.length > 1) {
+                optimizationHtml = `
+                    <div style="background: #f0f9ff; border: 1px solid #2383e2; border-radius: 6px; padding: 15px; margin-top: 15px;">
+                        <div style="color: #2383e2; font-weight: 600; margin-bottom: 8px;">💡 省料小貼士</div>
+                        <div style="color: #37352f; font-size: 0.9em; line-height: 1.4;">
+                            有經驗的師傅可以透過智能拼配來節省布料：<br>
+                            • 檢查是否能在同一段布料上同時裁切多個項目<br>
+                            • 合理安排裁切順序，充分利用剩料空間<br>
+                            • 考慮調整項目尺寸以提高布料利用率<br>
+                            <span style="color: #787774; font-size: 0.85em;">※ 以上計算為基礎估算，實際用量可能因拼配技巧而有所差異</span>
+                        </div>
+                    </div>
+                `;
+            }
+
             resultDiv.innerHTML = `
                 <h3>🎯 計算結果</h3>
-                <div class="length-value">${totalLength.toFixed(1)} cm</div>
+                <div class="length-value">${totalLength.toFixed(0)} cm</div>
+                <div style="font-size: 1.2em; color: #787774; margin-bottom: 15px; text-align: center;">
+                    約 <strong style="color: #2383e2;">${totalYards.toFixed(2)} 碼</strong>
+                </div>
                 <div class="formula">
                     在幅寬 ${maxWidth} cm 的條件下<br>
-                    總面積 ${totalArea.toFixed(1)} cm² → 實際需要 ${totalLength.toFixed(1)} cm
+                    總面積 ${totalArea.toFixed(1)} cm² → 實際需要 ${totalLength.toFixed(0)} cm (${totalYards.toFixed(2)} 碼)
                 </div>
                 ${warningHtml}
+                ${optimizationHtml}
                 <div class="layout-details">
                     <h4>📋 排版明細</h4>
                     ${layoutHtml}
